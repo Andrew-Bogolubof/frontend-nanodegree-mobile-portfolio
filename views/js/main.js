@@ -497,16 +497,26 @@ function logAverageFrame(times) {   // times is the array of User Timing measure
 // https://www.igvita.com/slides/2012/devtools-tips-and-tricks/jank-demo.html
 
 // Moves the sliding background pizzas based on scroll position
+var firstUpdate = true;
+var items
 function updatePositions() {
   frame++;
   window.performance.mark("mark_start_frame");
 
-  var items = document.querySelectorAll('.mover');
+  items = items || document.querySelectorAll('.mover');
   for (var i = 0; i < items.length; i++) {
     // document.body.scrollTop is no longer supported in Chrome.
     var scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-    var phase = Math.sin((scrollTop / 1250) + (i % 5));
-    items[i].style.left = items[i].basicLeft + 100 * phase + 'px';
+    var phase;
+    if (firstUpdate) {
+      phase = Math.sin((scrollTop / 1250) + (i % 5));
+      items[i].style.left = items[i].basicLeft + 100 * phase + 'px';
+    } else {
+      phase = Math.sin((scrollTop / 1250) + (i % 5));
+      var cuurentLeft = /\d+/.exec(items[i].style.left).join('');
+      var moveDelta = items[i].basicLeft + 100 * phase - cuurentLeft;
+      items[i].style.transform = 'translateX(' + moveDelta + 'px)';
+    }
   }
 
   // User Timing API to the rescue again. Seriously, it's worth learning.
@@ -539,4 +549,5 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   document.querySelector("#movingPizzas1").appendChild(fragment);
   updatePositions();
+  firstUpdate = false;
 });
